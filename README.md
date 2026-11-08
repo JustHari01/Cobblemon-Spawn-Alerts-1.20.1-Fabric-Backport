@@ -29,7 +29,7 @@ For the upstream configuration guide, see the [Cobblemon Spawn Alerts documentat
 
 ## Build
 
-Use JDK 17. On Windows run:
+Use JDK 21 to run Gradle and Architectury Loom. The mod's Java sources are compiled for Java 17 so they can run on Minecraft 1.20.1. On Windows run:
 
 ~~~bat
 gradlew.bat :fabric:build
