@@ -14,7 +14,8 @@ public class MessageUtils {
     }
 
     public static void sendTranslated(String translationKey, @Nullable ClickEvent clickEvent, Object... args) {
-        if (!(Minecraft.getInstance().player instanceof Player player)) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null) {
             return;
         }
 

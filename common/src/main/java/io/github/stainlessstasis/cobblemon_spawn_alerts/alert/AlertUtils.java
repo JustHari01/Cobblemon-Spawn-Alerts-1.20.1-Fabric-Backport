@@ -51,16 +51,18 @@ public class AlertUtils {
 
             String fixedName = name.toLowerCase().replaceAll("[ _-]", "");
             if (fixedName.contains(fixedPokemonName) || fixedName.contains(String.valueOf(dexID))) {
-                if (CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getPokemonConfig().pokemonConfigs().get(name)
-                        instanceof PokemonConfig.PokemonSpecificConfig _config) {
-                    return Pair.of(true, _config);
+                PokemonConfig.PokemonSpecificConfig config = CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER
+                        .getPokemonConfig().pokemonConfigs().get(name);
+                if (config != null) {
+                    return Pair.of(true, config);
                 }
             }
         }
 
-        if (CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getPokemonConfig().pokemonConfigs().get(CobblemonSpawnAlerts.DEFAULT_POKEMON_CONFIG_NAME)
-                instanceof PokemonConfig.PokemonSpecificConfig _config) {
-            return Pair.of(false, _config);
+        PokemonConfig.PokemonSpecificConfig defaultConfig = CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER
+                .getPokemonConfig().pokemonConfigs().get(CobblemonSpawnAlerts.DEFAULT_POKEMON_CONFIG_NAME);
+        if (defaultConfig != null) {
+            return Pair.of(false, defaultConfig);
         } else {
             CobblemonSpawnAlerts.LOGGER.warn("No default config found in `pokemon.json`, creating a new one.");
             return Pair.of(false, PokemonConfig.PokemonSpecificConfig.createDefault());

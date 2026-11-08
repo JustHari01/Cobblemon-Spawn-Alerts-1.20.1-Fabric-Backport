@@ -13,18 +13,15 @@ import net.minecraft.client.multiplayer.ClientLevel;
 
 public class PacketHandlers {
     public static void handlePokemonDataPacket(int pokemonNetworkID, IVs ivs, EVs evYield, Nature nature, Ability ability, RarityUtil.Bucket bucket) {
-        if (!(Minecraft.getInstance().level instanceof ClientLevel level)) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
             return;
         }
         if (!(level.getEntity(pokemonNetworkID) instanceof PokemonEntity pokemonEntity)) {
             return;
         }
 
-        Pokemon pokemon = pokemonEntity.getPokemon();
-        pokemon.setIvs$common(ivs);
-        pokemon.setNature(nature);
-        pokemon.setAbility$common(ability);
-        AlertHandler.alertClientside(pokemonEntity, evYield, bucket);
+        AlertHandler.alertClientside(pokemonEntity, ivs, evYield, nature, ability, bucket);
     }
 
     public static void handleAlertDataPacket(AlertDataPacket payload) {

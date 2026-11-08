@@ -1,6 +1,7 @@
 package io.github.stainlessstasis.cobblemon_spawn_alerts.alert;
 
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
+import com.cobblemon.mod.common.api.abilities.Ability;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.*;
 import com.mojang.datafixers.util.Pair;
@@ -45,6 +46,12 @@ public class AlertHandler {
     }
 
     public static void alertClientside(PokemonEntity pokemonEntity, EVs evYield, RarityUtil.Bucket bucket) {
+        Pokemon pokemon = pokemonEntity.getPokemon();
+        alertClientside(pokemonEntity, pokemon.getIvs(), evYield, pokemon.getNature(), pokemon.getAbility(), bucket);
+    }
+
+    public static void alertClientside(PokemonEntity pokemonEntity, IVs ivs, EVs evYield,
+                                       Nature nature, Ability ability, RarityUtil.Bucket bucket) {
         if (pokemonEntity.getOwnerUUID() != null) return;
         int dexId = pokemonEntity.getPokemon().getSpecies().getNationalPokedexNumber();
         if (!CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig().enableAlerts()) {
@@ -53,7 +60,8 @@ public class AlertHandler {
         }
 
         String nearestPlayerName = "N/A";
-        if (Minecraft.getInstance().player instanceof Player player) {
+        Player player = Minecraft.getInstance().player;
+        if (player != null) {
             nearestPlayerName = player.getName().getString();
         }
 
@@ -67,13 +75,13 @@ public class AlertHandler {
                         pokemonEntity.position().toVector3f(),
                         pokemon.getSpecies().getNationalPokedexNumber(),
                         nearestPlayerName,
-                        BiomeUtil.getBiomeKey(pokemonEntity.level(), pokemonEntity.position()),
+                        BiomeUtil.getBiomeKey(pokemonEntity.getCommandSenderWorld(), pokemonEntity.position()),
                         DimensionUtil.getDimensionKey(pokemonEntity),
                         bucket
                 ),
                 new PokemonStats(
                         pokemon.getLevel(),
-                        pokemon.getIvs(),
+                        ivs,
                         evYield
                 ),
                 new PokemonRarityData(
@@ -84,8 +92,8 @@ public class AlertHandler {
                         RarityUtil.isParadox(dexId),
                         RarityUtil.isStarter(dexId)),
                 new PokemonTraits(
-                        pokemon.getNature().getName().getPath(),
-                        pokemon.getAbility().getName(),
+                        nature.getName().getPath(),
+                        ability.getName(),
                         pokemon.getGender().name(),
                         pokemon.getForm().getName()
                 )
@@ -93,7 +101,8 @@ public class AlertHandler {
     }
 
     public static void alert(AlertDataPacket alertData) {
-        if (!(Minecraft.getInstance().player instanceof Player player)) return;
+        Player player = Minecraft.getInstance().player;
+        if (player == null) return;
         if (CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.isReloading()) return;
         if (!CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig().enableAlerts()) return;
         if (alreadyAlerted.contains(alertData.spawnData().pokemonUUID())) return;
@@ -366,7 +375,8 @@ public class AlertHandler {
     }
 
     public static void alertDespawned(DespawnDataPacket despawnData) {
-        if (!(Minecraft.getInstance().player instanceof Player player)) return;
+        Player player = Minecraft.getInstance().player;
+        if (player == null) return;
         if (CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.isReloading()) return;
         if (!CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig().enableDespawnAlerts()) return;
 

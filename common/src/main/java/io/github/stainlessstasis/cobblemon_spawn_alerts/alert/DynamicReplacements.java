@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -264,7 +265,7 @@ public class DynamicReplacements {
         };
 
         if (isClient) {
-            return Component.translatable(key, StringUtil.capitalize(gender.getSerializedName().toLowerCase())).getString();
+            return Component.translatable(key, StringUtil.capitalize(gender.name().toLowerCase(Locale.ROOT))).getString();
         }
 
         return key;

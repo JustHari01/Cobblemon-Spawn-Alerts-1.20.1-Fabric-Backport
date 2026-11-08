@@ -55,7 +55,7 @@ public class CobblemonSpawnAlerts {
 
         CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.NORMAL, event -> {
             if (CobblemonSpawnAlerts.globallyAlerted.contains(event.getPokemon().getUuid())) {
-                Services.PLATFORM.onPokemonDespawned(event.getPlayer().level(), event.getPokemon(), event.getPlayer().getName().getString(), DespawnReason.CAPTURED);
+                Services.PLATFORM.onPokemonDespawned(event.getPlayer().getCommandSenderWorld(), event.getPokemon(), event.getPlayer().getName().getString(), DespawnReason.CAPTURED);
             }
             return Unit.INSTANCE;
         });
@@ -73,13 +73,13 @@ public class CobblemonSpawnAlerts {
             Optional<UUID> uuid = StreamSupport.stream(event.getBattle().getPlayerUUIDs().spliterator(), false).findFirst();
             String playerName = "N/A";
             if (uuid.isPresent()) {
-                Player player = event.getKilled().getEntity().level().getPlayerByUUID(uuid.get());
+                Player player = event.getKilled().getEntity().getCommandSenderWorld().getPlayerByUUID(uuid.get());
                 if (player != null) {
                     playerName = player.getName().getString();
                 }
             }
 
-            Services.PLATFORM.onPokemonDespawned(event.getKilled().getEntity().level(), pokemon, playerName, DespawnReason.FAINTED);
+            Services.PLATFORM.onPokemonDespawned(event.getKilled().getEntity().getCommandSenderWorld(), pokemon, playerName, DespawnReason.FAINTED);
 
             return Unit.INSTANCE;
         });
@@ -150,7 +150,9 @@ public class CobblemonSpawnAlerts {
         String pokemonName = PokemonNameUtil.getTranslationKey(pokemon);
 
         String nearestPlayerName = "N/A";
-        if (pokemonEntity.level().getNearestPlayer(pokemonEntity, 128d) instanceof Player player) {
+        Level level = pokemonEntity.getCommandSenderWorld();
+        Player player = level.getNearestPlayer(pokemonEntity, 128d);
+        if (player != null) {
             nearestPlayerName = player.getName().getString();
         }
 
@@ -161,7 +163,7 @@ public class CobblemonSpawnAlerts {
                     pokemonEntity.position().toVector3f(),
                     pokemon.getSpecies().getNationalPokedexNumber(),
                     nearestPlayerName,
-                    BiomeUtil.getBiomeKey(pokemonEntity.level(), pokemonEntity.position()),
+                    BiomeUtil.getBiomeKey(level, pokemonEntity.position()),
                     DimensionUtil.getDimensionKey(pokemonEntity),
                     bucket
             ),

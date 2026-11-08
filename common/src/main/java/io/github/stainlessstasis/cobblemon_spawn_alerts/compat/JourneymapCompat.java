@@ -39,7 +39,7 @@ public class JourneymapCompat {
             waypointName = DynamicReplacements.applyDynamicReplacements(jmConfig.waypointName(), pokemonConfig, alertData, new StringBuilder());
         }
 
-        Waypoint waypoint = WaypointFactory.createClientWaypoint(CobblemonSpawnAlerts.MOD_ID, pos, waypointName, dimension, jmConfig.persistent());
+        Waypoint waypoint = WaypointFactory.createWaypoint(CobblemonSpawnAlerts.MOD_ID, pos, waypointName, dimension, jmConfig.persistent());
 
         if (!jmConfig.waypointHexColor().isEmpty()) {
             Color color = Color.WHITE;
