@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "cobblemon_spawn_alerts",
+  "version": "${version}",
+  "name": "Cobblemon Spawn Alerts (Unofficial 1.20.1 Backport)",
+  "description": "An unofficial Fabric 1.20.1 backport of Cobblemon Spawn Alerts for Cobblemon 1.5.2.",
+  "authors": [
+    "Stasis, the Shattered",
+    "JustHari01 (unofficial 1.20.1 backport)"
+  ],
+  "license": "MIT",
+  "icon": "assets/cobblemon_spawn_alerts/icon.png",
+  "environment": "*",
+  "mixins": [
+    "common.mixins.json",
+    "fabric.mixins.json"
+  ],
+  "accessWidener": "cobblemon-spawn-alerts.accesswidener",
+  "entrypoints": {
+    "main": [
+      "io.github.stainlessstasis.cobblemon_spawn_alerts.CSAFabric"
+    ],
+    "client": [
+      "io.github.stainlessstasis.cobblemon_spawn_alerts.CSAFabricClient"
+    ],
+    "journeymap": [
+      "io.github.stainlessstasis.cobblemon_spawn_alerts.JourneymapFabricPlugin"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric-api": "*",
+    "minecraft": "1.20.1",
+    "cobblemon": ">=1.5.2",
+    "emberstextapi": ">=3.0.4"
+  }
+}
