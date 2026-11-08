@@ -40,7 +40,7 @@ public class HiddenAbilityUtil {
                         .map(AbilityTemplate::getName)
                         .collect(Collectors.toSet());
 
-        AbilityTemplate ability = Abilities.get(abilityID);
+        AbilityTemplate ability = Abilities.INSTANCE.get(abilityID);
         if (ability == null) {
             return false;
         }
@@ -50,11 +50,12 @@ public class HiddenAbilityUtil {
     }
 
     public static boolean hasHiddenAbility(int dexID, String formID, String abilityID) {
-        Species species = PokemonSpecies.getByPokedexNumber(dexID, Cobblemon.MODID);
+        Species species = PokemonSpecies.INSTANCE.getByPokedexNumber(dexID, Cobblemon.MODID);
         if (species == null) {
             return false;
         }
 
-        return hasHiddenAbility(species.getFormByName(formID), abilityID);
+        FormData form = species.getForms().stream().filter(candidate -> candidate.getName().equalsIgnoreCase(formID)).findFirst().orElse(species.getStandardForm());
+        return form != null && hasHiddenAbility(form, abilityID);
     }
 }

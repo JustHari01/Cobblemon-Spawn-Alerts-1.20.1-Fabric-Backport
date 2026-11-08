@@ -222,6 +222,6 @@ public abstract class AbstractConfigManager {
     }
 
     public static void openDirectory() {
-        Util.getPlatform().openPath(MOD_CONFIG_DIR);
+        Util.getPlatform().openFile(MOD_CONFIG_DIR.toFile());
     }
 }

@@ -11,7 +11,6 @@ import com.cobblemon.mod.common.pokemon.EVs;
 import com.cobblemon.mod.common.pokemon.IVs;
 import com.cobblemon.mod.common.pokemon.Nature;
 import com.cobblemon.mod.common.pokemon.Pokemon;
-import com.cobblemon.mod.common.pokemon.stat.CobblemonStatProvider;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.alert.DespawnReason;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.compat.DiscordWebhookService;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.config.manager.CommonConfigManager;
@@ -48,7 +47,7 @@ public class CobblemonSpawnAlerts {
             var entity = event.getEntity();
             RarityUtil.Bucket bucket = RarityUtil.Bucket.NONE;
             if (COMMON_CONFIG_MANAGER.getServerConfig().broadcastBucket()) {
-                bucket = RarityUtil.getRarityBucket(entity, event.getSpawnablePosition());
+                bucket = RarityUtil.getRarityBucket(entity, event.getCtx());
             }
             Services.PLATFORM.onPokemonSpawned(entity, bucket);
             return Unit.INSTANCE;
@@ -101,11 +100,11 @@ public class CobblemonSpawnAlerts {
         ServerConfig config = CobblemonSpawnAlerts.COMMON_CONFIG_MANAGER.getServerConfig();
         Pokemon pokemon = pokemonEntity.getPokemon();
 
-        IVs ivs = config.broadcastIVs() ? pokemon.getIvs() : CobblemonStatProvider.INSTANCE.createEmptyIVs(0);
-        Nature nature = config.broadcastNature() ? pokemon.getNature() : Natures.NAUGHTY;
-        Ability ability = config.broadcastAbility() ? pokemon.getAbility() : Abilities.get("levitate").create(false, Priority.LOWEST);
+        IVs ivs = config.broadcastIVs() ? pokemon.getIvs() : IVs.Companion.createRandomIVs(0);
+        Nature nature = config.broadcastNature() ? pokemon.getNature() : Natures.INSTANCE.getNAUGHTY();
+        Ability ability = config.broadcastAbility() ? pokemon.getAbility() : Abilities.INSTANCE.get("levitate").create(false);
 
-        EVs finalEvYield = CobblemonStatProvider.INSTANCE.createEmptyEVs();
+        EVs finalEvYield = EVs.Companion.createEmpty();
         if (config.broadcastEVs()) {
             finalEvYield = EvsUtil.getEVsFromYield(pokemon.getForm().getEvYield());
         }
@@ -115,8 +114,8 @@ public class CobblemonSpawnAlerts {
 
     public static PokemonStats createPokemonStats(Pokemon pokemon) {
         ServerConfig config = CobblemonSpawnAlerts.COMMON_CONFIG_MANAGER.getServerConfig();
-        IVs ivs = config.broadcastIVs() ? pokemon.getIvs() : IVs.createRandomIVs(0);
-        EVs evYield = config.broadcastEVs() ? EvsUtil.getEVsFromYield(pokemon.getForm().getEvYield()) : EVs.createEmpty();
+        IVs ivs = config.broadcastIVs() ? pokemon.getIvs() : IVs.Companion.createRandomIVs(0);
+        EVs evYield = config.broadcastEVs() ? EvsUtil.getEVsFromYield(pokemon.getForm().getEvYield()) : EVs.Companion.createEmpty();
 
         return new PokemonStats(pokemon.getLevel(), ivs, evYield);
     }
@@ -135,8 +134,8 @@ public class CobblemonSpawnAlerts {
 
     public static PokemonTraits createPokemonTraits(Pokemon pokemon) {
         ServerConfig config = CobblemonSpawnAlerts.COMMON_CONFIG_MANAGER.getServerConfig();
-        String nature = config.broadcastNature() ? pokemon.getNature().getName().getPath() : Natures.NAUGHTY.getName().getPath();
-        String ability = config.broadcastAbility() ? pokemon.getAbility().getName() : Abilities.get("levitate").create(false, Priority.LOWEST).getName();
+        String nature = config.broadcastNature() ? pokemon.getNature().getName().getPath() : Natures.INSTANCE.getNAUGHTY().getName().getPath();
+        String ability = config.broadcastAbility() ? pokemon.getAbility().getName() : Abilities.INSTANCE.get("levitate").create(false).getName();
 
         return new PokemonTraits(
                 nature,

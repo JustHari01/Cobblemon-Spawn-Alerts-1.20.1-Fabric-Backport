@@ -17,7 +17,7 @@ public class DimensionUtil {
 
     public static ResourceKey<Level> getDimension(String key) {
         String[] split = StringUtil.splitIdentifier(key);
-        ResourceLocation rl = ResourceLocation.fromNamespaceAndPath(split[0], split[1]);
+        ResourceLocation rl = new ResourceLocation(split[0], split[1]);
         return ResourceKey.create(Registries.DIMENSION, rl);
     }
 }

@@ -112,12 +112,12 @@ public class DynamicReplacements {
             case LEVEL -> getSideAwareTemplate(tag, isClient, data.stats().level());
             case DEX -> getSideAwareTemplate(tag, isClient, data.spawnData().dexId());
             case NATURE -> {
-                var nature = Natures.getNature(data.traits().natureID());
+                var nature = Natures.INSTANCE.getNature(data.traits().natureID());
                 String name = getNatureAbilityName(nature != null ? nature.getDisplayName() : "N/A", isClient);
                 yield getSideAwareTemplate(tag, isClient, name);
             }
             case ABILITY -> {
-                var ability = Abilities.get(data.traits().abilityID());
+                var ability = Abilities.INSTANCE.get(data.traits().abilityID());
                 String name = getNatureAbilityName(ability != null ? ability.getDisplayName() : "N/A", isClient);
                 yield getSideAwareTemplate(tag, isClient, name);
             }

@@ -3,7 +3,6 @@ package io.github.stainlessstasis.cobblemon_spawn_alerts.util;
 import com.cobblemon.mod.common.api.pokemon.stats.Stat;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.pokemon.EVs;
-import com.cobblemon.mod.common.pokemon.stat.CobblemonStatProvider;
 import com.google.gson.*;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.core.CobblemonSpawnAlerts;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.platform.Services;
@@ -28,7 +27,7 @@ public class EvsUtil {
     private static final Map<Integer, EVs> cache = new HashMap<>();
 
     public static EVs getEVsFromYield(Map<Stat, Integer> evYield) {
-        EVs finalEvYield = CobblemonStatProvider.INSTANCE.createEmptyEVs();
+        EVs finalEvYield = EVs.Companion.createEmpty();
         for (Stat stat : evYield.keySet()) {
             finalEvYield.add(stat, evYield.get(stat));
         }
@@ -40,9 +39,9 @@ public class EvsUtil {
             return cache.get(dexNumber);
         }
 
-        Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(ResourceLocation.fromNamespaceAndPath(CobblemonSpawnAlerts.MOD_ID, "evyields.json"));
+        Optional<Resource> resource = Minecraft.getInstance().getResourceManager().getResource(new ResourceLocation(CobblemonSpawnAlerts.MOD_ID, "evyields.json"));
         if (resource.isEmpty()) {
-            return EVs.createEmpty();
+            return EVs.Companion.createEmpty();
         }
 
         try {
@@ -52,7 +51,7 @@ public class EvsUtil {
             if (rootObject.has(String.valueOf(dexNumber))) {
                 JsonObject evYieldObject = rootObject.getAsJsonObject(String.valueOf(dexNumber));
                 EVYield evYield = GSON.fromJson(evYieldObject, EVYield.class);
-                EVs evs = EVs.createEmpty();
+                EVs evs = EVs.Companion.createEmpty();
                 evs.set(Stats.HP, evYield.hp);
                 evs.set(Stats.ATTACK, evYield.attack);
                 evs.set(Stats.DEFENCE, evYield.defence);
@@ -66,7 +65,7 @@ public class EvsUtil {
             CobblemonSpawnAlerts.LOGGER.error("Could not create reader for file `evyields.json`: "+e);
         }
 
-        return EVs.createEmpty();
+        return EVs.Companion.createEmpty();
     }
 
     public static void clearCache() {

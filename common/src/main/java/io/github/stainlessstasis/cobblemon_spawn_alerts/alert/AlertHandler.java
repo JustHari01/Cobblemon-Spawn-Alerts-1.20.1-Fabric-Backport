@@ -1,12 +1,6 @@
 package io.github.stainlessstasis.cobblemon_spawn_alerts.alert;
 
-import com.cobblemon.mod.common.Cobblemon;
-import com.cobblemon.mod.common.api.pokedex.PokedexEntryProgress;
-import com.cobblemon.mod.common.api.pokedex.SpeciesDexRecord;
-import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import com.cobblemon.mod.common.api.pokemon.stats.Stats;
-import com.cobblemon.mod.common.api.storage.player.client.ClientPokedexManager;
-import com.cobblemon.mod.common.client.CobblemonClient;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.*;
 import com.mojang.datafixers.util.Pair;
@@ -41,14 +35,22 @@ public class AlertHandler {
     }
 
     public static void alertClientside(PokemonEntity pokemonEntity) {
-        if (!CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig().enableAlerts()) return;
+        int dexId = pokemonEntity.getPokemon().getSpecies().getNationalPokedexNumber();
+        if (!CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig().enableAlerts()) {
+            DexProgressStore.markSeen(dexId);
+            return;
+        }
         EVs defaultEVYield = EvsUtil.getYield(pokemonEntity.getPokemon().getSpecies().getNationalPokedexNumber());
         alertClientside(pokemonEntity, defaultEVYield, RarityUtil.Bucket.COMMON);
     }
 
     public static void alertClientside(PokemonEntity pokemonEntity, EVs evYield, RarityUtil.Bucket bucket) {
         if (pokemonEntity.getOwnerUUID() != null) return;
-        if (!CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig().enableAlerts()) return;
+        int dexId = pokemonEntity.getPokemon().getSpecies().getNationalPokedexNumber();
+        if (!CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig().enableAlerts()) {
+            DexProgressStore.markSeen(dexId);
+            return;
+        }
 
         String nearestPlayerName = "N/A";
         if (Minecraft.getInstance().player instanceof Player player) {
@@ -57,7 +59,6 @@ public class AlertHandler {
 
         Pokemon pokemon = pokemonEntity.getPokemon();
         String pokemonName = PokemonNameUtil.getTranslatedName(pokemon);
-        int dexId = pokemon.getSpecies().getNationalPokedexNumber();
 
         alert(new AlertDataPacket(
                 new PokemonSpawnData(
@@ -98,7 +99,6 @@ public class AlertHandler {
         if (alreadyAlerted.contains(alertData.spawnData().pokemonUUID())) return;
 
         MainConfig mainConfig = CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig();
-        ClientPokedexManager dex = CobblemonClient.INSTANCE.getClientPokedexData();
         Vector3f spawnPos = alertData.spawnData().position();
 
         String pokemonName = PokemonNameUtil.getTranslatedName(alertData.spawnData().pokemonName());
@@ -116,8 +116,10 @@ public class AlertHandler {
         boolean isUltra = alertData.rarity().isUltraBeast();
         boolean isParadox = alertData.rarity().isParadox();
         boolean isStarter = alertData.rarity().isStarter();
-        boolean isInDex = false;
-        boolean isCaught = false;
+        int dexId = alertData.spawnData().dexId();
+        boolean isInDex = DexProgressStore.hasSeen(dexId);
+        boolean isCaught = DexProgressStore.hasCaught(dexId);
+        DexProgressStore.markSeen(dexId);
 
         // Check if should alert for rarity/shiny
         boolean shouldAlertShiny =
@@ -133,18 +135,9 @@ public class AlertHandler {
         boolean shouldAlertBucket = mainConfig.bucketsToAlert().contains(alertData.spawnData().bucket());
 
         // Check if should alert for dex
-        boolean shouldAlertNotInDex = mainConfig.alertAllNotInDex();
-        boolean shouldAlertUncaught = mainConfig.alertAllUncaught();
-        Species species = PokemonSpecies.getByPokedexNumber(alertData.spawnData().dexId(), Cobblemon.MODID);
-        SpeciesDexRecord record = dex.getSpeciesRecord(species.resourceIdentifier);
-        if (record != null) {
-            shouldAlertNotInDex = false;
-            isInDex = true;
-            if (record.hasAtLeast(PokedexEntryProgress.CAUGHT)) {
-                shouldAlertUncaught = false;
-                isCaught = true;
-            }
-        }
+        boolean shouldAlertNotInDex = mainConfig.alertAllNotInDex() && !isInDex;
+        boolean shouldAlertUncaught = mainConfig.alertAllUncaught() && !isCaught;
+
 
         // Check if should alert for HA
         boolean shouldAlertHA =
@@ -298,7 +291,7 @@ public class AlertHandler {
             if (!(Objects.equals(pokemonConfig.customAlertSound(), ""))) {
                 String[] split = StringUtil.splitIdentifier(pokemonConfig.customAlertSound());
                 if (!split[0].equals("NO NAMESPACE")) {
-                    ResourceLocation resourceLocation = ResourceLocation.fromNamespaceAndPath(split[0], split[1]);
+                    ResourceLocation resourceLocation = new ResourceLocation(split[0], split[1]);
                     SoundEvent sound = SoundEvent.createFixedRangeEvent(resourceLocation, -1f);
                     player.playNotifySound(sound, SoundSource.MASTER, 1f, 1f);
                 } else {
@@ -328,7 +321,7 @@ public class AlertHandler {
                     if (traits.get(soundTrait) && !soundID.isEmpty()) {
                         String[] split = StringUtil.splitIdentifier(soundID);
                         if (!split[0].equals("NO NAMESPACE")) {
-                            ResourceLocation resourceLocation = ResourceLocation.fromNamespaceAndPath(split[0], split[1]);
+                            ResourceLocation resourceLocation = new ResourceLocation(split[0], split[1]);
                             SoundEvent sound = SoundEvent.createFixedRangeEvent(resourceLocation, -1f);
                             player.playNotifySound(sound, SoundSource.MASTER, 1f, 1f);
                         } else {
@@ -379,6 +372,8 @@ public class AlertHandler {
 
         final AlertDataPacket alertData = despawnData.alertData();
         final PokemonSpawnData spawnData = alertData.spawnData();
+        DespawnReason reason = DespawnReason.valueOf(despawnData.despawnReason());
+        if (reason == DespawnReason.CAPTURED) DexProgressStore.markCaught(spawnData.dexId());
 
         if (!alreadyAlerted.contains(alertData.spawnData().pokemonUUID())) return;
 
@@ -396,7 +391,7 @@ public class AlertHandler {
         MainConfig mainConfig = CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMainConfig();
         String message = MessageUtils.getTranslated(CobblemonSpawnAlertsClient.CLIENT_CONFIG_MANAGER.getMessageTemplates().despawnMessage());
 
-        message = switch (DespawnReason.valueOf(despawnData.despawnReason())) {
+        message = switch (reason) {
             case CAPTURED -> message.replace("{despawned}", Component.translatable(messageTemplates.despawnReason_Captured(), spawnData.nearestPlayerName()).getString());
             case DESPAWNED -> message.replace("{despawned}", Component.translatable(messageTemplates.despawnReason_Despawned()).getString());
             case FAINTED -> message.replace("{despawned}", Component.translatable(messageTemplates.despawnReason_Fainted(), spawnData.nearestPlayerName()).getString());
@@ -414,7 +409,7 @@ public class AlertHandler {
         if (mainConfig.enableSounds() && !(Objects.equals(despawnSound, ""))) {
             String[] split = StringUtil.splitIdentifier(despawnSound);
             if (!split[0].equals("NO NAMESPACE")) {
-                ResourceLocation resourceLocation = ResourceLocation.fromNamespaceAndPath(split[0], split[1]);
+                ResourceLocation resourceLocation = new ResourceLocation(split[0], split[1]);
                 SoundEvent sound = SoundEvent.createFixedRangeEvent(resourceLocation, -1f);
                 player.playNotifySound(sound, SoundSource.MASTER, 1f, 1f);
             } else {

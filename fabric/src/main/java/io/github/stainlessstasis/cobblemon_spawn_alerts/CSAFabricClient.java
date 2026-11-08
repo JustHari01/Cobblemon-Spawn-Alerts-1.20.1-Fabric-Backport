@@ -65,28 +65,24 @@ public class CSAFabricClient implements ClientModInitializer {
 
 
        // Packets
-        ClientPlayNetworking.registerGlobalReceiver(PokemonDataPacket.ID, (payload, context) -> {
-            context.client().execute(() -> {
-                PacketHandlers.handlePokemonDataPacket(payload.pokemonNetworkID(), payload.ivs(), payload.evYield(), payload.nature(), payload.ability(), payload.bucket());
-            });
+        ClientPlayNetworking.registerGlobalReceiver(ModPackets.POKEMON_DATA, (client, handler, buffer, sender) -> {
+            PokemonDataPacket payload = PokemonDataPacket.read(buffer);
+            client.execute(() -> PacketHandlers.handlePokemonDataPacket(payload.pokemonNetworkID(), payload.ivs(), payload.evYield(), payload.nature(), payload.ability(), payload.bucket()));
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(AlertDataPacket.ID, (payload, context) -> {
-            context.client().execute(() -> {
-                PacketHandlers.handleAlertDataPacket(payload);
-            });
+        ClientPlayNetworking.registerGlobalReceiver(ModPackets.ALERT_DATA, (client, handler, buffer, sender) -> {
+            AlertDataPacket payload = AlertDataPacket.read(buffer);
+            client.execute(() -> PacketHandlers.handleAlertDataPacket(payload));
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(DespawnDataPacket.ID, (payload, context) -> {
-            context.client().execute(() -> {
-                PacketHandlers.handleDespawnDataPacket(payload);
-            });
+        ClientPlayNetworking.registerGlobalReceiver(ModPackets.DESPAWN_DATA, (client, handler, buffer, sender) -> {
+            DespawnDataPacket payload = DespawnDataPacket.read(buffer);
+            client.execute(() -> PacketHandlers.handleDespawnDataPacket(payload));
         });
 
-        ClientPlayNetworking.registerGlobalReceiver(ModLoadedPacket.ID, (payload, context) -> {
-            context.client().execute(() -> {
-                doesServerHaveMod = true;
-            });
+        ClientPlayNetworking.registerGlobalReceiver(ModPackets.MOD_LOADED, (client, handler, buffer, sender) -> {
+            ModLoadedPacket payload = ModLoadedPacket.read(buffer);
+            client.execute(() -> doesServerHaveMod = payload.loaded());
         });
     }
 

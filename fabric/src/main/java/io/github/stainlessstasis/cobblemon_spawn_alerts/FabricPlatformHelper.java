@@ -6,17 +6,21 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.alert.DespawnReason;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.core.CobblemonSpawnAlerts;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.network.AlertDataPacket;
+import io.github.stainlessstasis.cobblemon_spawn_alerts.network.DespawnDataPacket;
+import io.github.stainlessstasis.cobblemon_spawn_alerts.network.ModPackets;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.platform.IPlatformHelper;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.platform.Platform;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.alert.AlertUtils;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.util.RarityUtil;
 import kotlin.Unit;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -29,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class FabricPlatformHelper implements IPlatformHelper {
 
@@ -60,7 +65,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
 
             // Send EVERY PokemonEntity to clients that have the entity loaded for IV/EV hunting, etc.
             for (ServerPlayer player : PlayerLookup.tracking((pokemonEntity))) {
-                ServerPlayNetworking.send(player, CobblemonSpawnAlerts.createPokemonData(pokemonEntity, bucket));
+                send(player, ModPackets.POKEMON_DATA, buffer -> CobblemonSpawnAlerts.createPokemonData(pokemonEntity, bucket).write(buffer));
                 alreadyAlerted.add(player.getUUID());
             }
 
@@ -82,7 +87,7 @@ public class FabricPlatformHelper implements IPlatformHelper {
                         continue;
                     }
 
-                    ServerPlayNetworking.send(player, alertData);
+                    send(player, ModPackets.ALERT_DATA, alertData::write);
                 }
             }
 
@@ -96,9 +101,19 @@ public class FabricPlatformHelper implements IPlatformHelper {
 
         if (_level instanceof ServerLevel level) {
             for (ServerPlayer player : level.players()) {
-                ServerPlayNetworking.send(player, CobblemonSpawnAlerts.createDespawnData(level, pokemon, playerName, despawnReason));
+                DespawnDataPacket packet = CobblemonSpawnAlerts.createDespawnData(level, pokemon, playerName, despawnReason);
+                send(player, ModPackets.DESPAWN_DATA, packet::write);
             }
         }
+    }
+
+    private static void send(ServerPlayer player, net.minecraft.resources.ResourceLocation channel, Consumer<FriendlyByteBuf> writer) {
+        if (!ServerPlayNetworking.canSend(player, channel)) {
+            return;
+        }
+        FriendlyByteBuf buffer = PacketByteBufs.create();
+        writer.accept(buffer);
+        ServerPlayNetworking.send(player, channel, buffer);
     }
 
     @Override
