@@ -4,7 +4,7 @@ import io.github.stainlessstasis.cobblemon_spawn_alerts.compat.JourneymapCompat;
 import io.github.stainlessstasis.cobblemon_spawn_alerts.core.CobblemonSpawnAlerts;
 import journeymap.api.v2.client.IClientAPI;
 import journeymap.api.v2.client.IClientPlugin;
-import journeymap.api.v2.client.JourneyMapPlugin;
+import journeymap.api.v2.common.JourneyMapPlugin;
 
 @JourneyMapPlugin(apiVersion = "2.0.0")
 public class JourneymapFabricPlugin implements IClientPlugin {
